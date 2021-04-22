@@ -2,8 +2,6 @@
 import { cloneDeep, debounce, isNil, isEqual } from 'lodash'
 import { valuesToObject, invokeOrReturn } from '@utils'
 
-const FETCH_LIST_DEBOUNCE_WAIT_TIME = 300
-
 const parseEquality = (filter) => {
   const itemFilterKey = filter.itemFilterKey ?? filter.attrs['item-value']
 
@@ -42,7 +40,7 @@ export default {
     title: {
       type: String,
       required: false,
-      default: function() {
+      default: function () {
         return this.$t('filters')
       },
     },
@@ -65,6 +63,36 @@ export default {
         ...defaultfilterComponents,
       }),
     },
+    emitSelectedFiltersDebounceWaitTime: {
+      type: Number,
+      required: false,
+      default: () => 300,
+    },
+    disableAddFilter: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
+    disableAllFilters: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
+    disableResetFilters: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
+    disabled: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
+    disableEmitSelectedFiltersDebounce: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
   },
   data() {
     return {
@@ -85,8 +113,19 @@ export default {
   },
   async created() {
     this.normalizedFilters = this.normalizeFilters(this.filters)
+    this.setInitialSelectedFilters(this.normalizedFilters)
   },
   methods: {
+    setInitialSelectedFilters(filters) {
+      this.selectedFilters = []
+      filters.forEach((filter) => {
+        if (filter.autoSelect) {
+          this.addFilter()
+          this.handleFilterChange(cloneDeep(filter), this.selectedFilters.length - 1)
+        }
+      })
+      this.emitSelectedFilters()
+    },
     canRenderSelectedFilterOptions(selectedFilter) {
       return selectedFilter.type && this.getFilterOptions(selectedFilter).length > 1
     },
@@ -95,31 +134,33 @@ export default {
 
       const selectedFiltersMap = valuesToObject({ values: this.selectedFilters, key: 'value' })
 
-      for (const attrKey in targetFilterData.attrs) {
-        if (
-          typeof targetFilterData.attrs[attrKey] === 'function' &&
-          (!responsibleFilter ||
-            (responsibleFilter && targetFilterData.dependsOn?.includes(responsibleFilter.value)))
-        ) {
-          const normalizedFilter = this.normalizedFilters.find(
-            (normalizedFilter) => normalizedFilter.value === targetFilterData.value
-          )
+      if (targetFilterData) {
+        for (const attrKey in targetFilterData.attrs) {
+          if (
+            typeof targetFilterData.attrs[attrKey] === 'function' &&
+            (!responsibleFilter ||
+              (responsibleFilter && targetFilterData.dependsOn?.includes(responsibleFilter.value)))
+          ) {
+            const normalizedFilter = this.normalizedFilters.find(
+              (normalizedFilter) => normalizedFilter.value === targetFilterData.value
+            )
 
-          this.$set(this.filtersLoadingStateMap, selectedFilter.value, true)
-          const updatedAttr = await targetFilterData.attrs[attrKey](selectedFiltersMap)
-          this.$set(this.filtersLoadingStateMap, selectedFilter.value, false)
+            this.$set(this.filtersLoadingStateMap, selectedFilter.value, true)
+            const updatedAttr = await targetFilterData.attrs[attrKey](selectedFiltersMap)
+            this.$set(this.filtersLoadingStateMap, selectedFilter.value, false)
 
-          if (normalizedFilter && !isEqual(normalizedFilter.attrs[attrKey], updatedAttr)) {
-            normalizedFilter.attrs[attrKey] = updatedAttr
-            normalizedFilter.input = null
+            if (normalizedFilter && !isEqual(normalizedFilter.attrs[attrKey], updatedAttr)) {
+              normalizedFilter.attrs[attrKey] = updatedAttr
+              normalizedFilter.input = null
+            }
+
+            if (selectedFilter && !isEqual(selectedFilter.attrs[attrKey], updatedAttr)) {
+              selectedFilter.attrs[attrKey] = updatedAttr
+              selectedFilter.input = null
+            }
+
+            await this.assignSelectedFilterListAttrs(selectedFilter)
           }
-
-          if (selectedFilter && !isEqual(selectedFilter.attrs[attrKey], updatedAttr)) {
-            selectedFilter.attrs[attrKey] = updatedAttr
-            selectedFilter.input = null
-          }
-
-          await this.assignSelectedFilterListAttrs(selectedFilter)
         }
       }
     },
@@ -265,26 +306,34 @@ export default {
       }
     },
     resetSelectedFilters() {
-      this.selectedFilters = []
-      this.assignDisabledFilters()
-      this.emitSelectedFilters()
+      if (this.selectedFilters.length) {
+        this.selectedFilters = []
+        this.assignDisabledFilters()
+        this.emitSelectedFilters()
+      }
     },
     validateFilters() {
       return (
         !this.$refs.filterRefs || !this.$refs.filterRefs.some((filterRef) => !filterRef.validate())
       )
     },
-    emitSelectedFilters: debounce(function() {
-      if (!this.validateFilters()) return
+    emitSelectedFilters: function () {
+      const _emitSelectedFilters = () => {
+        if (!this.validateFilters()) return
 
-      const parsedSelectedFilters = Object.assign(
-        {},
-        ...this.selectedFilters.map((selectedFilter) => {
-          return selectedFilter.filterOption.parseFilter(selectedFilter)
-        })
-      )
-      this.$emit('selected-filters-change', parsedSelectedFilters)
-    }, FETCH_LIST_DEBOUNCE_WAIT_TIME),
+        const parsedSelectedFilters = Object.assign(
+          {},
+          ...this.selectedFilters
+            .filter((selectedFilter) => !!selectedFilter.filterOption)
+            .map((selectedFilter) => selectedFilter.filterOption.parseFilter(selectedFilter))
+        )
+        return this.$emit('selected-filters-change', parsedSelectedFilters)
+      }
+
+      return this.disableEmitSelectedFiltersDebounce
+        ? _emitSelectedFilters()
+        : debounce(_emitSelectedFilters, this.emitSelectedFiltersDebounceWaitTime)()
+    },
   },
 }
 </script>
@@ -301,6 +350,7 @@ export default {
         fab
         x-small
         elevation="0"
+        :disabled="disabled || disableAddFilter"
         @click="addFilter"
       >
         <v-icon>mdi-plus</v-icon>
@@ -312,6 +362,7 @@ export default {
         text
         small
         elevation="0"
+        :disabled="disabled || disableResetFilters"
         @click="resetSelectedFilters"
       >
         {{ $t('reset_item', { item: $t('filters') }) }}
@@ -366,6 +417,7 @@ export default {
                   outlined: true,
                   ...selectedFilter.attrs,
                   items: getItems(selectedFilter),
+                  disabled: disabled || disableAllFilters,
                 }"
                 :value="selectedFilter.input"
                 :loading="filtersLoadingStateMap[selectedFilter.value]"

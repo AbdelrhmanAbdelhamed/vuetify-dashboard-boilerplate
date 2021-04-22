@@ -125,6 +125,8 @@ export function invokeOrReturn(invocableCandidate, ...args) {
 export function isEmpty(item = {}) {
   if (item == null) item = {}
 
+  if (typeof item !== 'object') item = { item }
+
   const values = ObjectToValues(item)
 
   return (
@@ -147,7 +149,7 @@ export function testRegex(regex, value) {
 }
 
 export function isValidObjectId(id) {
-  return testRegex(/^[0-9a-fA-F]+$/, id)
+  return testRegex(/^[a-fA-F0-9]{24}$/, id)
 }
 
 export function isValidPhoneNumber(phoneNumber) {
@@ -190,7 +192,7 @@ export function triggerRipple($el) {
   ev.clientY = offset.top + offset.height / 2
   $el.dispatchEvent(ev)
 
-  setTimeout(function() {
+  setTimeout(function () {
     $el.dispatchEvent(new Event('mouseup'))
   }, 300)
 }
@@ -203,4 +205,31 @@ export function roundToFixedNumber(num, scale = 2) {
 export function getNestedRef(component, refKeys = []) {
   const nestedPath = `$refs.${refKeys.join('.$refs.')}`
   return get(component, nestedPath)
+}
+
+export function filterArray(array, filters, filtersKeysDelimiter = '|') {
+  const filterKeys = Object.keys(filters)
+
+  return array.filter((item) =>
+    // performs a logical AND
+    filterKeys.every((key) => {
+      const filterValue = filters[key]
+      const filterKeyCandidates = key.split(filtersKeysDelimiter)
+
+      if (typeof filterValue !== 'function') {
+        if (isEmpty(filterValue)) return true // ignores empty filters
+
+        // performs a logical OR
+        return filterKeyCandidates.some((filterKeyCandidate) => {
+          const itemValue = get(item, filterKeyCandidate)
+
+          if (Array.isArray(filterValue)) return filterValue.includes(itemValue)
+
+          return String(itemValue).trim().toLowerCase() === String(filterValue).trim().toLowerCase()
+        })
+      }
+
+      return filterValue(item, filterKeyCandidates) // then it must be a function (predicate)
+    })
+  )
 }
