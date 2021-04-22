@@ -108,7 +108,7 @@ export const actions = {
     commit(RESET_<%= NAMES %>)
   },
   async create<%= Name %>({ commit }, { item, config }) {
-    const response = await <%= names %>Service.getAll({ item, config })
+    const response = await <%= names %>Service.create({ item, config })
     if (response) {
       commit(ADD_<%= NAME %>, response)
       return response

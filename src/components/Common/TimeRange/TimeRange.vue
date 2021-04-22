@@ -21,7 +21,7 @@ export default {
       required: false,
       default: 'ampm',
       validator(value) {
-        return ['ampm', '24h'].includes(value)
+        return ['ampm', '24hr'].includes(value)
       },
     },
     minuteInterval: {
@@ -52,11 +52,11 @@ export default {
   },
   data() {
     return {
-      supportedFormats: { ampm: 'hh:mm A', '24h': 'HH:mm' },
+      supportedFormats: { ampm: 'hh:mm A', '24hr': 'HH:mm' },
       from: '',
       to: '',
       isFromSameOrBeforeToRule: (v) =>
-        isFromSameOrBeforeTo(this.from, this.to, this.supportedFormats['24h']) ||
+        isFromSameOrBeforeTo(this.from, this.to, this.supportedFormats['24hr']) ||
         'Start Time must be same or before End Time',
     }
   },
@@ -95,12 +95,12 @@ export default {
     formatRangeTo24h(from, to) {
       let formatted24hFrom
       if (from) {
-        formatted24hFrom = formatDate(from, this.timeFormat, this.supportedFormats['24h'])
+        formatted24hFrom = formatDate(from, this.timeFormat, this.supportedFormats['24hr'])
       }
 
       let formatted24hTo
       if (to) {
-        formatted24hTo = formatDate(to, this.timeFormat, this.supportedFormats['24h'])
+        formatted24hTo = formatDate(to, this.timeFormat, this.supportedFormats['24hr'])
       }
       return [formatted24hFrom, formatted24hTo]
     },

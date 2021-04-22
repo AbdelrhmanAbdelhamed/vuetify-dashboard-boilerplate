@@ -78,7 +78,7 @@
     "eslint-plugin-vue": "6.2.x",
     "eslint-plugin-vuetify": "^1.0.0-beta.7",
     "express": "4.17.x",
-    "hygen": "^5.0.3",
+    "hygen": "5.0.3",
     "imagemin-lint-staged": "0.4.x",
     "lint-staged": "10.3.x",
     "markdownlint-cli": "0.23.x",

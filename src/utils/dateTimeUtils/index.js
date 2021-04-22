@@ -30,15 +30,17 @@ function updateMomentLocale(
 momentDurationFormatSetup(moment)
 updateMomentLocale(moment)
 
-export function isFromSameOrBeforeTo(from, to, format = 'HH:mm') {
+export const timeFormats = { ampm: 'hh:mm A', '24hr': 'HH:mm' }
+
+export function isFromSameOrBeforeTo(from, to, format = timeFormats['24hr']) {
   return moment(from, format).isSameOrBefore(moment(to, format))
 }
 
-export function secondsToHours(time, format = 'HH:mm', options = { trim: false }) {
+export function secondsToHours(time, format = timeFormats['24hr'], options = { trim: false }) {
   return moment.duration(time, 'seconds').format(format, options)
 }
 
-export function formatHours(time, format = 'HH:mm', options = { trim: false }) {
+export function formatHours(time, format = timeFormats['24hr'], options = { trim: false }) {
   return moment.duration(time, 'hours').format(format, options)
 }
 

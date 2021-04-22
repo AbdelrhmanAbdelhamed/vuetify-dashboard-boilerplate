@@ -82,13 +82,13 @@ export default class BaseModel {
   static getRawFieldName(field) {
     const rawFieldsMap = merge(cloneDeep(BaseModel.rawFieldsMap), this.rawFieldsMap)
 
-    return rawFieldsMap[field]?.name || rawFieldsMap[field] || field
+    return rawFieldsMap[field]?.name || field
   }
 
   static getRawParamsName(field) {
     const rawParamsMap = merge(cloneDeep(BaseModel.rawParamsMap), this.rawParamsMap)
 
-    return rawParamsMap[field]?.name || rawParamsMap[field] || this.getRawFieldName(field)
+    return rawParamsMap[field]?.name || this.getRawFieldName(field)
   }
 
   static toRawParams(fields) {
