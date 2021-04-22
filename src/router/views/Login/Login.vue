@@ -65,9 +65,9 @@ export default {
 </script>
 
 <template>
-  <v-row justify="center" align="center">
-    <v-col cols="12" sm="8" md="4">
-      <base-material-card class="px-5 py-3" max-width="100%" width="400">
+  <div class="login-wrapper">
+    <div class="login-card">
+      <base-material-card class="px-5 py-3" max-width="100%">
         <template v-slot:heading>
           <div class="text-center">
             <div class="text-h3 font-weight-bold mb-2">
@@ -124,6 +124,32 @@ export default {
           </v-form>
         </v-card-text>
       </base-material-card>
-    </v-col>
-  </v-row>
+    </div>
+  </div>
 </template>
+
+<style lang="scss" scoped>
+/* stylelint-disable selector-class-pattern */
+.login-wrapper {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  justify-content: center !important;
+  margin-right: 0;
+  margin-left: 0;
+}
+.login-card {
+  width: 400px;
+  max-width: 100%;
+}
+@media only screen and (max-width: 600px) {
+  .login-card {
+    width: 90%;
+  }
+}
+@media only screen and (max-width: 400px) {
+  .login-card {
+    width: 100%;
+  }
+}
+</style>
