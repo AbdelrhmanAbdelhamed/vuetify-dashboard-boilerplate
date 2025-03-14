@@ -5,7 +5,7 @@
   - [Route Access](#route-access)
   - [Navbar Item Access](#navbar-item-access)
 
-## Adding A New Roleob
+## Adding A New Role
 
 To create a user role area, you need to define its abilities through [casl](https://github.com/stalniy/casl).
 
